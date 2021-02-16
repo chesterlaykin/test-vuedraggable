@@ -44,7 +44,7 @@
                         :key="`item_${idx}`"
                         class="boxgroup-item"
                     >
-                        <p>Item {{idx + 1}}</p>
+                        <p class="font-sm" >{{item.textContent }}</p>
                         <p>{{boxGroup.textContent}}</p>
                     </div>
                 </div>
@@ -103,7 +103,7 @@ import draggable from 'vuedraggable'
                             [                   
                                 {
                                     groupName: 'firstGroup',
-                                    textContent: 'Hello this is an item for first group'
+                                    textContent: 'Hello this is an item for first group.'
                                 },
                                 {
                                     groupName: 'firstGroup',
@@ -271,8 +271,9 @@ import draggable from 'vuedraggable'
         }
     }
     .boxgroup-item{
-        height:30px;
-        padding:12px;
+        min-height:30px;
+        max-width: 140px;
+        padding:4px;
         margin-right:2px;
         background: rgb(174, 255, 174);
         border: 1px solid black;
