@@ -19,7 +19,7 @@
             <div v-if="scenario" class="text-l font-sm" style="width:200px;">
                 <ul>
                     <li>Drag to change order. </li>
-                    <li> Add item - see that it ends up in the right group</li>
+                    <li> Add item - does it end up in the right group?</li>
                 </ul>
                </div>
             <draggable v-model="form.dataGroups" 
@@ -271,7 +271,7 @@ import draggable from 'vuedraggable'
         }
     }
     .boxgroup-item{
-        min-height:30px;
+        min-height:68px;
         max-width: 140px;
         padding:4px;
         margin-right:2px;
