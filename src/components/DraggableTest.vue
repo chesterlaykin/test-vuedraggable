@@ -12,8 +12,13 @@
             <div style="height:130px;margin-bottom:22px;">
                 <div v-if="addItemWindow" class="additem">
                     <p>Add item</p>
-                    <input type="text" v-model="newItem.textContent">
-                    <button type="button" :disabled="!newItem.textContent.length" class="btn btn1" @click="addItem">Add</button>
+                    <input ref="newitem" @keyup.enter="addItem" type="text" v-model="newItem.textContent">
+                    <button type="button" 
+                        :disabled="!newItem.textContent.length" 
+                        class="btn btn1" 
+                        @click="addItem"
+                        
+                    >Add</button>
                 </div>
             </div>
             <div v-if="scenario" class="text-l font-sm" style="width:200px;">
@@ -28,24 +33,24 @@
                 ghost-class="ghost" 
                 class="row"
             >
-                <div v-for="(boxGroup, idx) in form.dataGroups" 
-                    :key="`group_${idx}`" 
+                <div v-for="(dataGroup, dataGroupIndex) in form.dataGroups" 
+                    :key="`group_${dataGroupIndex}`" 
                     class="drag-element flex-center"
                     style="display:flex"
                 >
                     <!-- add item to the current datagroup - but check the config if it is allowed -->
                     <a v-if="true"   
-                        @click="openAddItemWindow(idx)" 
+                        @click="openAddItemWindow(dataGroup.properties.name,dataGroupIndex)" 
                         class="btn btn2"  
                         v-cloak>Add new item
                     </a>
 
-                    <div v-for="(item, idx) in boxGroup" 
+                    <div v-for="(item, idx) in dataGroup.dataGroup" 
                         :key="`item_${idx}`"
-                        class="boxgroup-item"
+                        class="datagroup-item"
                     >
                         <p class="font-sm" >{{item.textContent }}</p>
-                        <p>{{boxGroup.textContent}}</p>
+                        <!-- <p>{{item.textContent}}</p> -->
                     </div>
                 </div>
 
@@ -86,12 +91,11 @@ import draggable from 'vuedraggable'
                 form: {
 
                     //dataGroups - Needs to be array since draggable requires it
-                    dataGroups: [
- 
-                    ]
+                    dataGroups: []
                 },
                 newItem: {
                     groupName: null,
+                    groupIndex: null,
                     textContent: '',
                 },
                 initialData: { 
@@ -100,23 +104,28 @@ import draggable from 'vuedraggable'
                         //scenario_1 - no complications
                         desc: 'scenario 1: all groups have initial content - no complications',
                         dataGroups:  [  
-                            [                   
-                                {
-                                    groupName: 'firstGroup',
-                                    textContent: 'Hello this is an item for first group.'
-                                },
-                                {
-                                    groupName: 'firstGroup',
-                                    textContent: 'Another item for first group'
-                                }
-                            ],
-                            //All 'secondGroup' items goes into this array 
-                            [
-                                {
-                                    groupName: 'secondGroup',
-                                    textContent: 'This is an item for second group'
-                                }, 
-                            ]
+                            {
+                                groupName: 'firstGroup',
+                                dataGroup: [    
+                                    {
+                                        groupName: 'firstGroup',
+                                        textContent: 'Hello this is an item for first group.'
+                                    },
+                                    {
+                                        groupName: 'firstGroup',
+                                        textContent: 'Another item for first group'
+                                    }
+                                ]
+                            },
+                            {
+                                groupName: 'secondGroup',
+                                dataGroup: [
+                                    {
+                                        groupName: 'secondGroup',
+                                        textContent: 'This is an item for second group'
+                                    } 
+                                ]
+                            }
                         ]
                     },
                     scenario_2 : {
@@ -126,18 +135,26 @@ import draggable from 'vuedraggable'
                     },
                     scenario_3 : {
                         //scenario_3 , no content in second group
-                        desc: 'scenario 3: second group have no initial content',
+                        desc: 'scenario 3: second group have no initial content', 
                         dataGroups:  [  
-                            [                   
-                                {
-                                    groupName: 'firstGroup',
-                                    textContent: 'Hello this is an item for first group'
-                                },
-                                {
-                                    groupName: 'firstGroup',
-                                    textContent: 'Another item for first group'
-                                }
-                            ], 
+                            {
+                                groupName: 'firstGroup',
+                                dataGroup: [                   
+                                    {
+                                        groupName: 'firstGroup',
+                                        textContent: 'Hello this is an item for first group'
+                                    },
+                                    {
+                                        groupName: 'firstGroup',
+                                        textContent: 'Another item for first group'
+                                    }
+                                ]
+                            },
+                            {
+                                groupName: 'secondGroup',
+                                dataGroup: [], 
+                            }
+                            
                         ]
                     }
                 }
@@ -170,84 +187,56 @@ import draggable from 'vuedraggable'
             loadInitialData(){
                 let currentScenario = this.initialData[this.scenario];
 
-                if(currentScenario.dataGroups.length){
+                //Initialize the data group with one object for each dataGroup defined in datagroupsConfig.
+                this.datagroupsConfig.forEach( dataGroupProps => {
+ 
+                    this.form.dataGroups.push({
+                        properties: {...dataGroupProps}, 
+                        dataGroup : []
+                    })
+                }) 
 
-                    //Add the datagroups
-                    this.form.dataGroups =[...currentScenario.dataGroups];
-
-                    //If any datagroups are missing, we need to add an empty array for that datagroup
-                    let numDataGroupsNeeded = this.datagroupsConfig.length; 
-          
-                    let numDatagroups = currentScenario.dataGroups.length; 
-                    numDataGroupsNeeded = numDataGroupsNeeded - numDatagroups;
-
-                    //add a default empty array for every not existing box group 
-                   this.initializeMissingDataGroups(numDataGroupsNeeded)
-                }else{
-                    //No dataGroups content - initialize empty array for each missing data group
-                    this.initializeMissingDataGroups(this.datagroupsConfig.length)
-                }
+                //Fill the data groups with any existing datagroups data
+                this.form.dataGroups.forEach( formDataGroup => { 
+                    //loop the stored data
+                    [...currentScenario.dataGroups].forEach( existingDataGroup => {
+                        
+                        if(formDataGroup.properties.name === existingDataGroup.groupName ){
+                            console.log('match:',existingDataGroup.groupName);
+                            //Add data
+                            formDataGroup.dataGroup = [...existingDataGroup.dataGroup];
+                            
+                        } 
+                    })
+                })
+   
             },
-            openAddItemWindow(idx) {
-
-                //-------------- Problem --------------- 
-                //We need to set the groupName so that we can add the item to that group
-                //We don't know the current groupname unless we can check an existing item by the index
-                let groupName = this.getGroupNameByGroupIndex(idx);
-                if(groupName){
-                    this.newItem.groupName = groupName
-                }
+            openAddItemWindow(groupName,groupIndex) {
+ 
+                //Set group name
+                this.newItem.groupName = groupName
+                this.newItem.groupIndex = groupIndex
                 
                 this.addItemWindow = true;
+
+                this.$nextTick( () => {
+
+                    this.$refs.newitem.focus();
+                })
+                
             },
-            initializeMissingDataGroups(num){
-                 for (let index = 0; index < num; index++) {
-                        this.form.dataGroups.push([])
-                        
-                    } 
-            },
-            getGroupNameByGroupIndex(idx){
-                if(this.form.dataGroups[idx].length){
-                    //get groupname by the existing item's groupName property
-                    return this.form.dataGroups[idx][0].groupName
-                }else{ 
-                     this.errors.push('Can\'t get current group name')
-                    return false;
-                }
-            },
-            //Add "newItem" to the dataGroup array it belongs to (determined by its groupName)
+            //Add "newItem" to the dataGroup index
             addItem(){
                 
-                //-------------- Problem --------------- 
-                //Each dataGroup array is for a certain group type.
-                //The item should go into the array of the group it belongs to
-                // but we can't determine this (unless there is an existing item to inspect)
-
-                //try to find existing item to identify the group name and retrieve the array index
-                console.log('groupName is ' + this.newItem.groupName);
-                let targetIndex = this.form.dataGroups.findIndex( (group,idx) => {
-                    if(group.length){
-                        
-                        if(group[0].groupName == this.newItem.groupName){
-                            console.log('groupName match: ' + this.newItem.groupName + ' index: ' + idx);
-                            return true;
-                        } 
-                    } 
-                })
-                 
-                if(targetIndex == -1){
-                    //not found. Put in first array
-                    console.log('no existing group found');
-                    this.errors.push('Can\'t locate group: ' + this.newItem.groupName)
-                    targetIndex = 0;
-
-                }else{
-                    console.log('targetIndex was found: ', targetIndex);
-                }
                 //add item
-                this.form.dataGroups[targetIndex].push(this.newItem);
+                this.form.dataGroups[this.newItem.groupIndex].dataGroup.push({
+                    groupName: this.newItem.groupName,
+                    textContent: this.newItem.textContent
+                });
+                //reset
                 this.newItem =  {
                     groupName: null,
+                    groupIndex:null,
                     textContent: '',
                 }
                 this.addItemWindow = false;
@@ -270,7 +259,7 @@ import draggable from 'vuedraggable'
             background:rgb(236, 236, 236);
         }
     }
-    .boxgroup-item{
+    .datagroup-item{
         min-height:68px;
         max-width: 140px;
         padding:4px;
