@@ -1,4 +1,4 @@
-# vuetests
+# test-vuedraggable
 
 ## Test
 https://codesandbox.io/s/hardcore-lake-gq8p7?file=/src/main.js
@@ -12,16 +12,4 @@ npm install
 ```
 npm run serve
 ```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+ 
